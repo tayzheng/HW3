@@ -10,6 +10,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, ValidationError
 from wtforms.validators import Required, Length
 from flask_sqlalchemy import SQLAlchemy
+from flask_script import Manager, Shell #added
 
 ############################
 # Application configurations
@@ -19,7 +20,7 @@ app.config['SECRET_KEY'] = 'hard to guess string from si364'
 ## TODO 364: Create a database in postgresql in the code line below, and fill in your app's database URI. It should be of the format: postgresql://localhost/YOUR_DATABASE_NAME
 
 ## Your final Postgres database should be your uniqname, plus HW3, e.g. "jczettaHW3" or "maupandeHW3"
-app.config["SQLALCHEMY_DATABASE_URI"] = ""
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgres://tayzheng@localhost/tayzhengHW3"
 ## Provided:
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -54,6 +55,15 @@ db = SQLAlchemy(app) # For database use
 ## Should have a __repr__ method that returns strings of a format like:
 #### {Tweet text...} (ID: {tweet id})
 
+class Tweet(db.Model):
+    __tablename__ = 'tweets'
+    tweetID  = db.Column(db.Integer, primary_key = True)
+    tweetText = db.Column(db.String(280))
+    tweetUserId = db.Column(db.Integer, db.ForeignKey('users.userID'))
+
+    def __repr__(self):
+        return '{} (ID: {}'.format(self.tweetText, self.tweetID)
+
 
 # - User
 ## -- id (Integer, Primary Key)
@@ -63,6 +73,15 @@ db = SQLAlchemy(app) # For database use
 
 ## Should have a __repr__ method that returns strings of a format like:
 #### {username} | ID: {id}
+
+class User(db.Model):
+    __tablename__ = 'users'
+    userID = db.Column(db.Integer, primary_key = True)
+    userUsername = db.Column(db.String(64), unique = True)
+    userDisplayname = (db.String(124))
+
+    def __repr__(self):
+        return '{} | ID: {}'.format(self.userUsername, self.userID)
 
 
 ########################
@@ -82,6 +101,20 @@ db = SQLAlchemy(app) # For database use
 # - the display name MUST be at least 2 words (this is a useful technique to practice, even though this is not true of everyone's actual full name!)
 
 # TODO 364: Make sure to check out the sample application linked in the readme to check if yours is like it!
+
+def username_validation(self, field):
+    if field.data[0] == '@':
+        raise ValidationError('Do not inlcude @ at the beginning of the username!')
+
+def displayname_validation(self, field):
+    if len(field.data.split()) < 2:
+        raise ValidationError('Display name needs to be at least two words!')
+
+class TweetForm(FlaskForm):
+    text = StringField('Enter the text of the tweet (no more than 280 chars): ', validators = [Required(), Length(1, 280)])
+    username = StringField('Enter a username of the twitter user (no "@"!): ', validators = [Required(), Length(1, 64), username_validation])
+    display_name = StringField('Enter the display name for the twitter user (must be at least 2 words): ', validators = [Required(), displayname_validation]
+    submit = SubmitField('Submit')
 
 
 ###################################
