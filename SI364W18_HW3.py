@@ -111,9 +111,11 @@ def displayname_validation(self, field):
         raise ValidationError('Display name needs to be at least two words!')
 
 class TweetForm(FlaskForm):
-    text = StringField('Enter the text of the tweet (no more than 280 chars): ', validators = [Required(), Length(1, 280)])
-    username = StringField('Enter a username of the twitter user (no "@"!): ', validators = [Required(), Length(1, 64), username_validation])
-    display_name = StringField('Enter the display name for the twitter user (must be at least 2 words): ', validators = [Required(), displayname_validation]
+
+    #variables have to be the same as in index.html
+    text = StringField('Enter the text of the tweet (no more than 280 chars): ', validators = [Required(), Length(max = 280)])
+    username = StringField('Enter a username of the twitter user (no "@"!): ', validators = [Required(), Length(max = 64), username_validation])
+    display_name = StringField('Enter the display name for the twitter user (must be at least 2 words): ', validators = [Required(), displayname_validation])
     submit = SubmitField('Submit')
 
 
@@ -150,25 +152,50 @@ def internal_server_error(e):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+
     # Initialize the form
+    form = TweetForm()
 
     # Get the number of Tweets
+    num_tweets = len(Tweet.query.all())
 
     # If the form was posted to this route,
     ## Get the data from the form
+    if form.validate_on_submit():
+        twt_text = form.text.data
+        user_name = form.username.data
+        dis_name = form.display_name.data
 
     ## Find out if there's already a user with the entered username
     ## If there is, save it in a variable: user
     ## Or if there is not, then create one and add it to the database
+    u = User.query.filter_by(username = user_name).first()
+
+    if u:
+        user_n = u
+    else:
+        user_n = User(username = user_name, display_name = dis_name)
+        db.session.add(user_n)
+        db.session.commit()
 
     ## If there already exists a tweet in the database with this text and this user id (the id of that user variable above...) ## Then flash a message about the tweet already existing
     ## And redirect to the list of all tweets
+    t = Tweet.query.filter_by(tweetText = twt_text, userID = user.userID)
+    # check if tweet has been tweeted before
+    if t:
+        flash("You have already tweeted this before!")
+        return redirect(url_for('see_all_tweets'))
 
     ## Assuming we got past that redirect,
     ## Create a new tweet object with the text and user id
     ## And add it to the database
     ## Flash a message about a tweet being successfully added
     ## Redirect to the index page
+    else:
+        t = Tweet(tweetText = twt_text, userID = user.userID)
+        db.session.add(t)
+        db.session.commmit()
+        flash('Tweet added successfully!')
 
     # PROVIDED: If the form did NOT validate / was not submitted
     errors = [v for v in form.errors.values()]
