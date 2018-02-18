@@ -223,7 +223,7 @@ def see_all_users():
 # Create another route (no scaffolding provided) at /longest_tweet with a view function get_longest_tweet (see details below for what it should do)
 # TODO 364
 # Create a template to accompany it called longest_tweet.html that extends from base.html.
-@app.route('/longest_tweet'):
+@app.route('/longest_tweet')
 def longest_tweet():
     tweets = Tweet.query.all()
     longest_messages = {}
