@@ -20,7 +20,7 @@ app.config['SECRET_KEY'] = 'hard to guess string from si364'
 ## TODO 364: Create a database in postgresql in the code line below, and fill in your app's database URI. It should be of the format: postgresql://localhost/YOUR_DATABASE_NAME
 
 ## Your final Postgres database should be your uniqname, plus HW3, e.g. "jczettaHW3" or "maupandeHW3"
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgres://tayzheng@localhost/tayzhengHW3"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgres://localhost/tayzhengHW3"
 ## Provided:
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -223,6 +223,32 @@ def see_all_users():
 # Create another route (no scaffolding provided) at /longest_tweet with a view function get_longest_tweet (see details below for what it should do)
 # TODO 364
 # Create a template to accompany it called longest_tweet.html that extends from base.html.
+@app.route('/longest_tweet'):
+def longest_tweet():
+    tweets = Tweet.query.all()
+    longest_messages = {}
+
+    for each_message in tweets:
+        tweet_id = each_message.userID
+        text = each_message.text
+        user = User.query.filter_by(id = tweet_id).first()
+        username = user.userUsername
+        display_name = user.userDisplayname
+        longest_messages[(text, username, display_name)] = 0
+
+        for each_char in text:
+            if each_char != " ":
+                longest_messages[(text, username, display_name)] += 1
+
+    tweets_sorted = sorted(longest_messages.items(), key = lambda x: (x[1], x[0]))
+    lontest_tweet_info = sorted(tweets_sorted[0][0])
+
+    longest_id = User.query.filter_by(text = longest_text).first().userID
+    longest_username = User.query.filter_by(id = longest_userid).first().userUsername
+    longest_display_name = User.query.filter_by(id = longest_userid).first().userDisplayname
+
+    return render_template('longest_tweet.html', longest_text = longest_text, longest_username = longest_username, longest_display_name = longest_display_name)
+
 
 # NOTE:
 # This view function should compute and render a template (as shown in the sample application) that shows the text of the tweet currently saved in the database which has the most NON-WHITESPACE characters in it, and the username AND display name of the user that it belongs to.
