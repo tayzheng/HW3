@@ -57,12 +57,12 @@ db = SQLAlchemy(app) # For database use
 
 class Tweet(db.Model):
     __tablename__ = 'tweets'
-    tweetID  = db.Column(db.Integer, primary_key = True)
-    tweetText = db.Column(db.String(280))
-    tweetUserId = db.Column(db.Integer, db.ForeignKey('users.userID'))
+    id  = db.Column(db.Integer, primary_key = True)
+    text = db.Column(db.String(280))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     def __repr__(self):
-        return '{} (ID: {}'.format(self.tweetText, self.tweetID)
+        return '{} (ID: {}'.format(self.text, self.id)
 
 
 # - User
@@ -76,12 +76,12 @@ class Tweet(db.Model):
 
 class User(db.Model):
     __tablename__ = 'users'
-    userID = db.Column(db.Integer, primary_key = True)
-    userUsername = db.Column(db.String(64), unique = True)
-    userDisplayname = (db.String(124))
+    id = db.Column(db.Integer, primary_key = True)
+    username = db.Column(db.String(64), unique = True)
+    display_name = (db.String(124))
 
     def __repr__(self):
-        return '{} | ID: {}'.format(self.userUsername, self.userID)
+        return '{} | ID: {}'.format(self.username, self.id)
 
 
 ########################
@@ -114,8 +114,8 @@ class TweetForm(FlaskForm):
 
     #variables have to be the same as in index.html
     text = StringField('Enter the text of the tweet (no more than 280 chars): ', validators = [Required(), Length(max = 280)])
-    username = StringField('Enter a username of the twitter user (no "@"!): ', validators = [Required(), Length(max = 64), username_validation])
-    display_name = StringField('Enter the display name for the twitter user (must be at least 2 words): ', validators = [Required(), displayname_validation])
+    username = StringField('Enter a username of the twitter user (no "@"!): ', validators = [Required(), Length(max = 64)])
+    display_name = StringField('Enter the display name for the twitter user (must be at least 2 words): ', validators = Required())
     submit = SubmitField('Submit')
 
 
@@ -180,7 +180,7 @@ def index():
 
     ## If there already exists a tweet in the database with this text and this user id (the id of that user variable above...) ## Then flash a message about the tweet already existing
     ## And redirect to the list of all tweets
-    t = Tweet.query.filter_by(tweetText = twt_text, userID = user.userID)
+    t = Tweet.query.filter_by(text = twt_text, id = user.id)
     # check if tweet has been tweeted before
     if t:
         flash("You have already tweeted this before!")
@@ -192,7 +192,7 @@ def index():
     ## Flash a message about a tweet being successfully added
     ## Redirect to the index page
     else:
-        t = Tweet(tweetText = twt_text, userID = user.userID)
+        t = Tweet(text = twt_text, id = user.id)
         db.session.add(t)
         db.session.commmit()
         flash('Tweet added successfully!')
@@ -210,7 +210,7 @@ def see_all_tweets():
     # HINT: Careful about what type the templating in all_tweets.html is expecting! It's a list of... not lists, but...
     # HINT #2: You'll have to make a query for the tweet and, based on that, another query for the username that goes with it...
     all_tweets = Tweet.query.all()
-    t = [(tweet.tweetText, User.query.filter_by(id = tweet.tweetUserId).first().username) for tweet in all_tweets]
+    t = [(tweet.text, User.query.filter_by(id = tweet.user_id).first().username) for tweet in all_tweets]
     return render_template('all_tweets.html', all_tweets = t)
 
 @app.route('/all_users')
@@ -229,11 +229,11 @@ def longest_tweet():
     longest_messages = {}
 
     for each_message in tweets:
-        tweet_id = each_message.userID
+        tweet_id = each_message.id
         text = each_message.text
         user = User.query.filter_by(id = tweet_id).first()
-        username = user.userUsername
-        display_name = user.userDisplayname
+        username = user.username
+        display_name = user.display_name
         longest_messages[(text, username, display_name)] = 0
 
         for each_char in text:
@@ -243,9 +243,9 @@ def longest_tweet():
     tweets_sorted = sorted(longest_messages.items(), key = lambda x: (x[1], x[0]))
     lontest_tweet_info = sorted(tweets_sorted[0][0])
 
-    longest_id = User.query.filter_by(text = longest_text).first().userID
-    longest_username = User.query.filter_by(id = longest_userid).first().userUsername
-    longest_display_name = User.query.filter_by(id = longest_userid).first().userDisplayname
+    longest_id = User.query.filter_by(text = longest_text).first().id
+    longest_username = User.query.filter_by(id = longest_id).first().username
+    longest_display_name = User.query.filter_by(id = longest_id).first().display_name
 
     return render_template('longest_tweet.html', longest_text = longest_text, longest_username = longest_username, longest_display_name = longest_display_name)
 
